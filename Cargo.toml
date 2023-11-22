@@ -1,0 +1,23 @@
+[package]
+name = "ticket"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = { version = "0.5.0", features = ["json"] }
+#diesel = { version = "2.1", features = ["sqlite"] }
+serde = "1.0"
+serde_derive = "1.0"
+sled = "0.34"
+arc-swap = "1.6.0"
+serde_cbor = "0.11"
+
+# [dependencies.rocket]
+# version = "0.5.0"
+# features = ["json"]
+
+[build-dependencies]
+#vcpkg = "0.2"
