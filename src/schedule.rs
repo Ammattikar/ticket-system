@@ -14,6 +14,8 @@ pub fn create_schedule(mut schedule: RocketJson<ScheduledDeparture>, db: &State<
 	schedule.id = ScheduledDepartureId(id);
 
 	db.write_item(schedule.id, &schedule.0, TABLE_SCHEDULES).expect("failed to write schedule");
+	db.write_paired_item(schedule.train, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TRAIN).expect("failed to write schedule train index");
+	db.write_paired_item(schedule.time, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TIME).expect("failed to write schedule time index");
 }
 
 #[get("/list")]
