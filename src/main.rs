@@ -60,6 +60,12 @@ fn rocket() -> _ {
 			schedule::list_schedules,
 		])
 		.mount("/", routes![
+			all_options
 			//todo: static asset root
 		])
+}
+
+#[options("/<_..>")]
+fn all_options() {
+	/* Intentionally left empty */
 }
