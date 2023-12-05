@@ -38,6 +38,5 @@ macro_rules! id_type {
 
 id_type!(SeatId);
 id_type!(TrainId);
-id_type!(SeatClassId);
 id_type!(TicketId);
 id_type!(ScheduledDepartureId);

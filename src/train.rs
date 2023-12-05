@@ -18,15 +18,6 @@ pub struct Seat {
 	id: SeatId,
 	/// The train this seat is located on.
 	train_id: TrainId,
-	/// The pricing class this seat is a member of.
-	seat_class: SeatClassId,
-}
-
-#[derive(Debug)]
-struct SeatClass {
-	/// An auto-incremented ID with no inherent meaning.
-	id: SeatClassId,
-	/// The user-visible name for this class of seats, such as 'First Class'.
 	name: String,
 	/// The price to book one seat in this class, excluding fees.
 	price: f32,  // not safe, but this is not a real application
@@ -44,11 +35,34 @@ pub fn get_train(id: u64, db: &State<Database>) -> Option<RocketJson<Train>> {
 }
 
 #[post("/create", data = "<train>")]
-pub fn create_train(mut train: RocketJson<Train>, db: &State<Database>) {
+pub fn create_train(mut train: RocketJson<Train>, db: &State<Database>) -> RocketJson<u64> {
 	let id = db.get_monotonic_id();
 	train.id = TrainId(id);
 
 	db.write_item(id, &train.0, b"trains").expect("failed to write train");
+	RocketJson(id)
+}
+
+#[post("/create_seat", data = "<seat>")]
+pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJson<SeatId> {
+	let id = db.get_monotonic_id();
+	seat.id = SeatId(id);
+
+	db.write_paired_item(id, seat.train_id.0, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
+
+	RocketJson(seat.id)
+}
+
+#[get("/list_seats/<train_id>")]
+pub fn list_seats(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> {
+	let train_id = TrainId(train_id);
+	let mut seats = Vec::new();
+	let known_seats: BTreeMap<SeatId, Seat> = db.scan_items_by_prefix(train_id, TABLE_BIKEY_SEATS).expect("unable to read seat information");
+	for (_id, seat) in known_seats {
+		seats.push(seat);
+	}
+
+	RocketJson(seats)
 }
 
 #[get("/available_seats/<train_id>/<schedule_id>")]
