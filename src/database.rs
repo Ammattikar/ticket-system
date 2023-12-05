@@ -10,6 +10,7 @@ use serde::{
 	de::DeserializeOwned,
 	Serialize
 };
+use anyhow::Result;
 
 pub struct Database {
 	inner_sled: ArcSwap<Option<sled::Db>>
@@ -28,7 +29,7 @@ impl Database {
 		}
 	}
 
-	pub fn init(&self) -> Result<(), Box<dyn Error>> {
+	pub fn init(&self) -> Result<()> {
 		let sled_db = sled::open("data/db")?;
 		self.inner_sled.swap(Arc::new(Some(sled_db)));
 
@@ -43,7 +44,7 @@ impl Database {
 	}
 
 	/// Read a single item from a `K->V` table.
-	pub fn read_item<K: Into<u64>, V: DeserializeOwned>(&self, id: K, table: &[u8]) -> Result<Option<V>, Box<dyn Error>> {
+	pub fn read_item<K: Into<u64>, V: DeserializeOwned>(&self, id: K, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -58,7 +59,7 @@ impl Database {
 	}
 
 	/// Read many values at once from a `K->V` table.
-	pub fn read_many<K: Into<u64>, V: DeserializeOwned>(&self, ids: Vec<K>, table: &[u8]) -> Result<Vec<V>, Box<dyn Error>> {
+	pub fn read_many<K: Into<u64>, V: DeserializeOwned>(&self, ids: Vec<K>, table: &[u8]) -> Result<Vec<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -76,8 +77,23 @@ impl Database {
 		Ok(values)
 	}
 
+	pub fn read_all<V: DeserializeOwned>(&self, table: &[u8]) -> Result<Vec<V>> {
+		let db = self.inner_sled.load();
+		let db = db.as_ref().as_ref().expect("database was not loaded");
+		let table = db.open_tree(table)?;
+
+		let mut values = Vec::new();
+
+		for result in &table {
+			let (_key, value) = result?;
+			values.push(serde_cbor::from_slice(&value)?);
+		}
+
+		Ok(values)
+	}
+
 	/// Write an item to a `K->V` table.
-	pub fn write_item<K: Into<u64>, V: Serialize>(&self, id: K, value: &V, table: &[u8]) -> Result<(), Box<dyn Error>> {
+	pub fn write_item<K: Into<u64>, V: Serialize>(&self, id: K, value: &V, table: &[u8]) -> Result<()> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -88,8 +104,19 @@ impl Database {
 		Ok(())
 	}
 
+	pub fn delete_item<K: Into<u64>>(&self, id: K, table: &[u8]) -> Result<()> {
+		let db = self.inner_sled.load();
+		let db = db.as_ref().as_ref().expect("database was not loaded");
+		let table = db.open_tree(table)?;
+
+		let key = id.into().to_be_bytes();
+		table.remove(key)?;
+
+		Ok(())
+	}
+
 	/// Read all keys from a `K->V` table.
-	pub fn list_item<K: From<u64>>(&self, table: &[u8]) -> Result<Vec<K>, Box<dyn Error>> {
+	pub fn list_item<K: From<u64>>(&self, table: &[u8]) -> Result<Vec<K>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -106,7 +133,7 @@ impl Database {
 	}
 
 	/// Read an entry from a `(K1,K2)->V` two-key table.
-	pub fn read_paired_item<K1: Into<u64>, K2: Into<u64>, V: DeserializeOwned>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<Option<V>, Box<dyn Error>> {
+	pub fn read_paired_item<K1: Into<u64>, K2: Into<u64>, V: DeserializeOwned>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -125,7 +152,7 @@ impl Database {
 	}
 
 	/// Write an entry to a `(K1,K2)->V` two-key table.
-	pub fn write_paired_item<K1: Into<u64>, K2: Into<u64>, V: Serialize>(&self, id1: K1, id2: K2, value: V, table: &[u8]) -> Result<(), Box<dyn Error>> {
+	pub fn write_paired_item<K1: Into<u64>, K2: Into<u64>, V: Serialize>(&self, id1: K1, id2: K2, value: V, table: &[u8]) -> Result<()> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
@@ -141,7 +168,12 @@ impl Database {
 	}
 
 	/// Perform a `K1` prefix scan on a `(K1,K2)->V` structured table, returning `K2` and `V`.
-	pub fn scan_items_by_prefix<K1: Into<u64>, K2: From<u64> + Ord, V: DeserializeOwned>(&self, id1: K1, table: &[u8]) -> Result<BTreeMap<K2, V>, Box<dyn Error>> {
+	pub fn scan_items_by_prefix<K1, K2, V>(&self, id1: K1, table: &[u8]) -> Result<BTreeMap<K2, V>>
+	where
+		K1: Into<u64>,
+		K2: From<u64> + Ord,
+		V: DeserializeOwned
+	{
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
