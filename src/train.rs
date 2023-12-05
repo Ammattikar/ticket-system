@@ -15,6 +15,7 @@ pub struct Train {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Seat {
 	/// An auto-incremented ID with no inherent meaning.
+	#[serde(default)]
 	id: SeatId,
 	/// The train this seat is located on.
 	train_id: TrainId,
@@ -48,7 +49,7 @@ pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJs
 	let id = db.get_monotonic_id();
 	seat.id = SeatId(id);
 
-	db.write_paired_item(id, seat.train_id.0, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
+	db.write_paired_item(seat.train_id.0, id, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
 
 	RocketJson(seat.id)
 }
