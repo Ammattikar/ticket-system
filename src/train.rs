@@ -90,9 +90,3 @@ pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) ->
 
 	RocketJson(seats)
 }
-
-pub fn list_tickets_for_train(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Ticket>> {
-	let train_id = TrainId(train_id);
-
-	todo!()
-}
