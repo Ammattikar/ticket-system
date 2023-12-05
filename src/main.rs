@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate log;
 
 pub mod prelude {
 	// pub use diesel::Queryable;
@@ -13,13 +15,14 @@ pub mod prelude {
 	pub use rocket::State;
 }
 
-mod auth;
+// mod auth;
 mod constants;
+mod database;
+mod debug;
+mod id_types;
 mod schedule;
 mod ticket;
 mod train;
-mod id_types;
-mod database;
 
 #[launch]
 fn rocket() -> _ {
@@ -28,18 +31,22 @@ fn rocket() -> _ {
 
 	rocket::build()
 		.manage(db)
-		.mount("/auth", routes![
-			auth::login,
-			auth::logout
-		])
 		.mount("/train", routes![
 			train::get_train,
 			train::create_train,
+			//train::delete_train,
 			train::list_trains,
 			train::available_seats
 		])
 		.mount("/ticket", routes![
-			ticket::create_ticket
+			ticket::create_ticket,
+			//ticket::delete_ticket,
 		])
-		.mount("/schedule", routes![])
+		.mount("/schedule", routes![
+			schedule::create_schedule,
+			schedule::list_schedules,
+		])
+		.mount("/", routes![
+			//todo: static asset root
+		])
 }
