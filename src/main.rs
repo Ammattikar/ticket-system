@@ -58,6 +58,7 @@ fn rocket() -> _ {
 		.mount("/schedule", routes![
 			schedule::create_schedule,
 			schedule::list_schedules,
+			schedule::list_after_time,
 		])
 		.mount("/", routes![
 			all_options
