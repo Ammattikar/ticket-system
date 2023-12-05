@@ -22,3 +22,13 @@ pub fn create_schedule(mut schedule: RocketJson<ScheduledDeparture>, db: &State<
 pub fn list_schedules(db: &State<Database>) -> RocketJson<Vec<ScheduledDeparture>> {
 	RocketJson(db.read_all(TABLE_SCHEDULES).expect("failed to read schedules list"))
 }
+
+#[get("/list/after/<start>")]
+pub fn list_after_time(start: u64, db: &State<Database>) -> RocketJson<Vec<ScheduledDeparture>> {
+	let mut ret = Vec::new();
+	for (_id, value) in db.scan_items_by_prefix::<_, u64, _>(start, TABLE_BIKEY_DEPARTURES_BY_TIME).expect("") {
+		ret.push(value);
+	}
+
+	RocketJson(ret)
+}
