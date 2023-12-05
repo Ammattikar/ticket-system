@@ -104,15 +104,13 @@ impl Database {
 		Ok(())
 	}
 
-	pub fn delete_item<K: Into<u64>>(&self, id: K, table: &[u8]) -> Result<()> {
+	pub fn delete_item<K: Into<u64>, V: DeserializeOwned>(&self, id: K, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 
 		let key = id.into().to_be_bytes();
-		table.remove(key)?;
-
-		Ok(())
+		Ok(table.remove(key)?.map(|v| serde_cbor::from_slice(&v)).transpose()?)
 	}
 
 	/// Read all keys from a `K->V` table.
@@ -165,6 +163,18 @@ impl Database {
 		table.insert(key, encoded)?;
 
 		Ok(())
+	}
+
+	pub fn delete_paired_item<K1: Into<u64>, K2: Into<u64>, V: DeserializeOwned>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<Option<V>> {
+		let db = self.inner_sled.load();
+		let db = db.as_ref().as_ref().expect("database was not loaded");
+		let table = db.open_tree(table)?;
+
+		let mut key = [0; 16];
+		key[0..8].copy_from_slice(&id1.into().to_be_bytes());
+		key[8..16].copy_from_slice(&id2.into().to_be_bytes());
+
+		Ok(table.remove(key)?.map(|v| serde_cbor::from_slice(&v)).transpose()?)
 	}
 
 	/// Perform a `K1` prefix scan on a `(K1,K2)->V` structured table, returning `K2` and `V`.

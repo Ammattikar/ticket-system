@@ -53,7 +53,7 @@ fn rocket() -> _ {
 		])
 		.mount("/ticket", routes![
 			ticket::create_ticket,
-			//ticket::delete_ticket,
+			ticket::delete_ticket,
 		])
 		.mount("/schedule", routes![
 			schedule::create_schedule,
