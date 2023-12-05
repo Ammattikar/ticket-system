@@ -24,12 +24,23 @@ mod schedule;
 mod ticket;
 mod train;
 
+use rocket::{
+	fairing::AdHoc,
+	http::Header
+};
+
 #[launch]
 fn rocket() -> _ {
 	let db = database::Database::new();
 	db.init().expect("database failed to initialize");
 
 	rocket::build()
+		.attach(AdHoc::on_response("Fix CORS", |_req, resp| Box::pin(async move {
+			resp.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+			resp.set_header(Header::new("Access-Control-Allow-Methods", "GET, POST"));
+			resp.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+			resp.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+		})))
 		.manage(db)
 		.mount("/train", routes![
 			train::get_train,
