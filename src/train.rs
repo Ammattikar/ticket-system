@@ -1,7 +1,6 @@
 use crate::{
 	prelude::*,
-	ticket::Ticket,
-	schedule::ScheduledDeparture,
+	ticket::Ticket
 };
 use std::collections::BTreeMap;
 

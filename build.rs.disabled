@@ -1,4 +1,0 @@
-fn main() {
-    // Link against sqlite3 from vcpkg for diesel. Requires triplet: x64-windows-static-md
-    vcpkg::find_package("sqlite3").unwrap();
-}

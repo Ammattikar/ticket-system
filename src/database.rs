@@ -1,11 +1,9 @@
 use std::{
 	collections::BTreeMap,
 	cmp::Ord,
-	error::Error,
 	sync::Arc
 };
 use arc_swap::ArcSwap;
-use crate::prelude::*;
 use serde::{
 	de::DeserializeOwned,
 	Serialize

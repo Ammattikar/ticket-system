@@ -2,11 +2,7 @@ pub const TABLE_TRAINS: &[u8] = b"trains";
 
 pub const TABLE_TICKETS: &[u8] = b"tickets";
 
-pub const TABLE_DEPARTURES: &[u8] = b"departures";
-
 pub const TABLE_SCHEDULES: &[u8] = b"schedules";
-
-pub const TABLE_USERS: &[u8] = b"users";
 
 pub const TABLE_BIKEY_DEPARTURES_BY_TRAIN: &[u8] = b"departures_by_train";
 

@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate rocket;
-#[macro_use]
-extern crate log;
 
 pub mod prelude {
-	// pub use diesel::Queryable;
 	pub use serde_derive::{Deserialize, Serialize};
 	pub use crate::{
 		constants::*,
@@ -15,10 +12,8 @@ pub mod prelude {
 	pub use rocket::State;
 }
 
-// mod auth;
 mod constants;
 mod database;
-mod debug;
 mod id_types;
 mod schedule;
 mod ticket;
@@ -62,7 +57,6 @@ fn rocket() -> _ {
 		])
 		.mount("/", routes![
 			all_options
-			//todo: static asset root
 		])
 }
 
