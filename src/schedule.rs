@@ -2,9 +2,10 @@ use crate::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ScheduledDeparture {
+	#[serde(default)]
 	id: ScheduledDepartureId,
 	train: TrainId,
-	time: std::time::SystemTime,
+	time: u64,	// seconds since UNIX epoch
 }
 
 #[post("/create", data = "<schedule>")]
