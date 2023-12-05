@@ -12,7 +12,7 @@ pub fn create_schedule(mut schedule: RocketJson<ScheduledDeparture>, db: &State<
 	let id = db.get_monotonic_id();
 	schedule.id = ScheduledDepartureId(id);
 
-	db.write_item(schedule.id, &schedule.0, TABLE_SCHEDULES);
+	db.write_item(schedule.id, &schedule.0, TABLE_SCHEDULES).expect("failed to write schedule");
 }
 
 #[get("/list")]
