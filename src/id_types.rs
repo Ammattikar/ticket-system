@@ -40,5 +40,4 @@ id_type!(SeatId);
 id_type!(TrainId);
 id_type!(SeatClassId);
 id_type!(TicketId);
-id_type!(ScheduleId);
 id_type!(ScheduledDepartureId);
