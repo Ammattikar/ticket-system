@@ -33,8 +33,8 @@ struct SeatClass {
 }
 
 #[get("/list")]
-pub fn list_trains(db: &State<Database>) -> RocketJson<Vec<TrainId>> {
-	RocketJson(db.list_item(TABLE_TRAINS).expect("failed to read train list"))
+pub fn list_trains(db: &State<Database>) -> RocketJson<Vec<Train>> {
+	RocketJson(db.read_all(TABLE_TRAINS).expect("failed to read trains list"))
 }
 
 #[get("/get/<id>")]
@@ -52,12 +52,12 @@ pub fn create_train(mut train: RocketJson<Train>, db: &State<Database>) {
 }
 
 #[get("/available_seats/<train_id>/<schedule_id>")]
-pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<SeatId>> {
+pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> {
 	let train_id = TrainId(train_id);
 	let schedule_id = ScheduledDepartureId(schedule_id);
 	/*
 		For seat in train, check if seat is allocated to ticket -- if no, return.
-	 */
+	*/
 
 	let mut known_seats: BTreeMap<SeatId, Seat> = db.scan_items_by_prefix(train_id, TABLE_BIKEY_SEATS).expect("unable to read seat information");
 	let tickets: BTreeMap<TicketId, Ticket> = db.scan_items_by_prefix(schedule_id, TABLE_BIKEY_TICKETS_BY_DEPARTURE).expect("unable to read ticket information");
@@ -68,7 +68,12 @@ pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) ->
 		known_seats.remove(&ticket.seat);
 	}
 
-	return RocketJson(known_seats.keys().cloned().collect())
+	let mut seats = Vec::new();
+	for (_id, seat) in known_seats {
+		seats.push(seat);
+	}
+
+	RocketJson(seats)
 }
 
 pub fn list_tickets_for_train(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Ticket>> {
