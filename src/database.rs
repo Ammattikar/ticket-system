@@ -75,6 +75,7 @@ impl Database {
 		Ok(values)
 	}
 
+	//// Read all values out of a `K->V` table.
 	pub fn read_all<V: DeserializeOwned>(&self, table: &[u8]) -> Result<Vec<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
@@ -102,12 +103,14 @@ impl Database {
 		Ok(())
 	}
 
+	/// Delete an item from a `K->V` table.
 	pub fn delete_item<K: Into<u64>, V: DeserializeOwned>(&self, id: K, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 
 		let key = id.into().to_be_bytes();
+		// entry might not exist, propagate the None out while still handling the error
 		Ok(table.remove(key)?.map(|v| serde_cbor::from_slice(&v)).transpose()?)
 	}
 
@@ -128,15 +131,21 @@ impl Database {
 		Ok(ids)
 	}
 
+	/// Take two u64s and merge them into a single fixed-size byte array.
+	fn generate_bikey(k1: u64, k2: u64) -> [u8; 16] {
+		let mut key = [0; 16];
+		key[0..8].copy_from_slice(&k1.to_be_bytes());
+		key[8..16].copy_from_slice(&k2.to_be_bytes());
+		key
+	}
+
 	/// Read an entry from a `(K1,K2)->V` two-key table.
 	pub fn read_paired_item<K1: Into<u64>, K2: Into<u64>, V: DeserializeOwned>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 
-		let mut key = [0; 16];
-		key[0..8].copy_from_slice(&id1.into().to_be_bytes());
-		key[8..16].copy_from_slice(&id2.into().to_be_bytes());
+		let key = Self::generate_bikey(id1.into(), id2.into());
 
 		let value = table.get(key)?;
 		if let Some(val) = value {
@@ -153,9 +162,7 @@ impl Database {
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 
-		let mut key = [0; 16];
-		key[0..8].copy_from_slice(&id1.into().to_be_bytes());
-		key[8..16].copy_from_slice(&id2.into().to_be_bytes());
+		let key = Self::generate_bikey(id1.into(), id2.into());
 
 		let encoded = serde_cbor::to_vec(&value)?;
 		table.insert(key, encoded)?;
@@ -163,14 +170,13 @@ impl Database {
 		Ok(())
 	}
 
+	/// Delete an item from a `(K1,K2)->V` two-key table.
 	pub fn delete_paired_item<K1: Into<u64>, K2: Into<u64>, V: DeserializeOwned>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<Option<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 
-		let mut key = [0; 16];
-		key[0..8].copy_from_slice(&id1.into().to_be_bytes());
-		key[8..16].copy_from_slice(&id2.into().to_be_bytes());
+		let key = Self::generate_bikey(id1.into(), id2.into());
 
 		Ok(table.remove(key)?.map(|v| serde_cbor::from_slice(&v)).transpose()?)
 	}
