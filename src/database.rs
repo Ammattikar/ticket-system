@@ -75,7 +75,7 @@ impl Database {
 		Ok(values)
 	}
 
-	//// Read all values out of a `K->V` table.
+	/// Read all values out of a `K->V` table.
 	pub fn read_all<V: DeserializeOwned>(&self, table: &[u8]) -> Result<Vec<V>> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
