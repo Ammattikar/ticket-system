@@ -45,6 +45,7 @@ fn rocket() -> _ {
 			train::create_seat,
 			train::list_seats,
 			train::available_seats,
+			train::list_tickets,
 		])
 		.mount("/ticket", routes![
 			ticket::create_ticket,

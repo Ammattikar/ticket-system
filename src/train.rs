@@ -65,6 +65,20 @@ pub fn list_seats(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> 
 	RocketJson(seats)
 }
 
+#[get("/tickets/<train_id>/<schedule_id>")]
+pub fn list_tickets(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<Ticket>> {
+	let mut ret = Vec::new();
+	let tickets: BTreeMap<TicketId, Ticket> = db.scan_items_by_prefix(schedule_id, TABLE_BIKEY_TICKETS_BY_DEPARTURE).expect("unable to read ticket information");
+	for (_id, ticket) in tickets {
+		if ticket.train.0 != train_id {
+			continue;
+		}
+		ret.push(ticket);
+	}
+
+	RocketJson(ret)
+}
+
 #[get("/available_seats/<train_id>/<schedule_id>")]
 pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> {
 	let train_id = TrainId(train_id);
