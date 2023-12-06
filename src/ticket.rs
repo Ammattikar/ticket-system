@@ -17,6 +17,7 @@ pub struct Ticket {
 	pub price_paid: f32,
 }
 
+/// Create a ticket with an automatically generated ID.
 #[post("/create", data = "<ticket>")]
 pub fn create_ticket(mut ticket: RocketJson<Ticket>, db: &State<Database>) {
 	ticket.id = TicketId(db.get_monotonic_id());
@@ -24,6 +25,7 @@ pub fn create_ticket(mut ticket: RocketJson<Ticket>, db: &State<Database>) {
 	db.write_paired_item(ticket.departure.0, ticket.id.0, &ticket.0, TABLE_BIKEY_TICKETS_BY_DEPARTURE).expect("failed to write ticket index");
 }
 
+/// Delete a ticket by ID, removing it from indexes.
 #[post("/delete/<ticket>")]
 pub fn delete_ticket(ticket: u64, db: &State<Database>) {
 	let id = TicketId(ticket);

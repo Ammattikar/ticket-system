@@ -23,17 +23,20 @@ pub struct Seat {
 	price: f32,  // not safe, but this is not a real application
 }
 
+/// List all trains in the database.
 #[get("/list")]
 pub fn list_trains(db: &State<Database>) -> RocketJson<Vec<Train>> {
 	RocketJson(db.read_all(TABLE_TRAINS).expect("failed to read trains list"))
 }
 
+/// Get a specific train by ID.
 #[get("/get/<id>")]
 pub fn get_train(id: u64, db: &State<Database>) -> Option<RocketJson<Train>> {
 	let id = TrainId(id); // not safe, but probably fine
 	db.read_item(id, TABLE_TRAINS).expect("failed to read train").map(RocketJson)
 }
 
+/// Create a train with an automatically generated ID.
 #[post("/create", data = "<train>")]
 pub fn create_train(mut train: RocketJson<Train>, db: &State<Database>) -> RocketJson<u64> {
 	let id = db.get_monotonic_id();
@@ -43,6 +46,7 @@ pub fn create_train(mut train: RocketJson<Train>, db: &State<Database>) -> Rocke
 	RocketJson(id)
 }
 
+/// Create a seat with an automatically generated ID.
 #[post("/create_seat", data = "<seat>")]
 pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJson<SeatId> {
 	let id = db.get_monotonic_id();
@@ -53,6 +57,7 @@ pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJs
 	RocketJson(seat.id)
 }
 
+/// List all seats associated with a specific train.
 #[get("/list_seats/<train_id>")]
 pub fn list_seats(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> {
 	let train_id = TrainId(train_id);
@@ -65,6 +70,7 @@ pub fn list_seats(train_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> 
 	RocketJson(seats)
 }
 
+/// List all tickets associated with a specific timeslot and train.
 #[get("/tickets/<train_id>/<schedule_id>")]
 pub fn list_tickets(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<Ticket>> {
 	let mut ret = Vec::new();
@@ -79,6 +85,7 @@ pub fn list_tickets(train_id: u64, schedule_id: u64, db: &State<Database>) -> Ro
 	RocketJson(ret)
 }
 
+/// List all seats on a train that are unoccupied (no ticket) for a specific timeslot.
 #[get("/available_seats/<train_id>/<schedule_id>")]
 pub fn available_seats(train_id: u64, schedule_id: u64, db: &State<Database>) -> RocketJson<Vec<Seat>> {
 	let train_id = TrainId(train_id);
