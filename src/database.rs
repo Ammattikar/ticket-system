@@ -75,11 +75,22 @@ impl Database {
 		Ok(values)
 	}
 
+	/// Determine if an item by this key is present in the table.
 	pub fn contains<K: Into<u64>>(&self, id: K, table: &[u8]) -> Result<bool> {
 		let db = self.inner_sled.load();
 		let db = db.as_ref().as_ref().expect("database was not loaded");
 		let table = db.open_tree(table)?;
 		Ok(table.contains_key(id.into().to_be_bytes())?)
+	}
+
+	/// Determine if an item by this keypair is present in the table.
+	pub fn contains_paired<K1: Into<u64>, K2: Into<u64>>(&self, id1: K1, id2: K2, table: &[u8]) -> Result<bool> {
+		let db = self.inner_sled.load();
+		let db = db.as_ref().as_ref().expect("database was not loaded");
+		let table = db.open_tree(table)?;
+		let key = Self::generate_bikey(id1.into(), id2.into());
+
+		Ok(table.contains_key(key)?)
 	}
 
 	/// Read all values out of a `K->V` table.

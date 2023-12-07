@@ -62,7 +62,7 @@ pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJs
 pub fn edit_seat(train_id: u64, seat_id: u64, mut seat: RocketJson<Seat>, db: &State<Database>) -> Status {
 	seat.id = SeatId(seat_id);
 
-	if db.contains(seat.id, TABLE_TICKETS).expect("failed to read ticket") {
+	if db.contains_paired(train_id, seat_id, TABLE_BIKEY_SEATS).expect("failed to read ticket") {
 		db.write_paired_item(train_id, seat_id, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
 
 		Status::Ok
