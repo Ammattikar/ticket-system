@@ -3,6 +3,7 @@ use crate::{
 	ticket::Ticket
 };
 use std::collections::BTreeMap;
+use rocket::http::Status;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Train {
@@ -55,6 +56,19 @@ pub fn create_seat(mut seat: RocketJson<Seat>, db: &State<Database>) -> RocketJs
 	db.write_paired_item(seat.train_id.0, id, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
 
 	RocketJson(seat.id)
+}
+
+#[post("/edit_seat/<train_id>/<seat_id>", data = "<seat>")]
+pub fn edit_seat(train_id: u64, seat_id: u64, mut seat: RocketJson<Seat>, db: &State<Database>) -> Status {
+	seat.id = SeatId(seat_id);
+
+	if db.contains(seat.id, TABLE_TICKETS).expect("failed to read ticket") {
+		db.write_paired_item(train_id, seat_id, &seat.0, TABLE_BIKEY_SEATS).expect("failed to create seat");
+
+		Status::Ok
+	} else {
+		Status::NotFound
+	}
 }
 
 /// List all seats associated with a specific train.

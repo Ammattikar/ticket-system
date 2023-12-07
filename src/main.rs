@@ -43,6 +43,7 @@ fn rocket() -> _ {
 			//train::delete_train,
 			train::list_trains,
 			train::create_seat,
+			train::edit_seat,
 			train::list_seats,
 			train::available_seats,
 			train::list_tickets,
@@ -50,9 +51,11 @@ fn rocket() -> _ {
 		.mount("/ticket", routes![
 			ticket::create_ticket,
 			ticket::delete_ticket,
+			ticket::edit_ticket,
 		])
 		.mount("/schedule", routes![
 			schedule::create_schedule,
+			schedule::edit_schedule,
 			schedule::list_schedules,
 			schedule::list_after_time,
 		])

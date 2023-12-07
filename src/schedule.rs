@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use rocket::http::Status;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ScheduledDeparture {
@@ -17,6 +18,20 @@ pub fn create_schedule(mut schedule: RocketJson<ScheduledDeparture>, db: &State<
 	db.write_item(schedule.id, &schedule.0, TABLE_SCHEDULES).expect("failed to write schedule");
 	db.write_paired_item(schedule.train, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TRAIN).expect("failed to write schedule train index");
 	db.write_paired_item(schedule.time, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TIME).expect("failed to write schedule time index");
+}
+
+#[post("/edit/<id>", data = "<schedule>")]
+pub fn edit_schedule(id: u64, mut schedule: RocketJson<ScheduledDeparture>, db: &State<Database>) -> Status {
+	schedule.id = ScheduledDepartureId(id);
+	if db.contains(schedule.id, TABLE_SCHEDULES).expect("failed to read schedule") {
+		db.write_item(schedule.id, &schedule.0, TABLE_SCHEDULES).expect("failed to write schedule");
+		db.write_paired_item(schedule.train, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TRAIN).expect("failed to write schedule train index");
+		db.write_paired_item(schedule.time, id, &schedule.0, TABLE_BIKEY_DEPARTURES_BY_TIME).expect("failed to write schedule time index");
+
+		Status::Ok
+	} else {
+		Status::NotFound
+	}
 }
 
 /// List all schedules.

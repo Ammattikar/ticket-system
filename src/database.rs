@@ -75,6 +75,13 @@ impl Database {
 		Ok(values)
 	}
 
+	pub fn contains<K: Into<u64>>(&self, id: K, table: &[u8]) -> Result<bool> {
+		let db = self.inner_sled.load();
+		let db = db.as_ref().as_ref().expect("database was not loaded");
+		let table = db.open_tree(table)?;
+		Ok(table.contains_key(id.into().to_be_bytes())?)
+	}
+
 	/// Read all values out of a `K->V` table.
 	pub fn read_all<V: DeserializeOwned>(&self, table: &[u8]) -> Result<Vec<V>> {
 		let db = self.inner_sled.load();
